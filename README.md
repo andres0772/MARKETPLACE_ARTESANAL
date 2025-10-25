@@ -20,7 +20,7 @@
 
 Sigue estos pasos para comenzar tu proyecto:
 
-1. Fork del repositorio https://github.com/UR-CC/plantilla-seminario, con un nombre relacionado con el proyecto de cada grupo.
+1. Fork del repositorio https://github.com/andres0772/MARKETPLACE_ARTESANAL.git, con un nombre relacionado con el proyecto de cada grupo.
 
 2. Clonar el repositorio base:
 
