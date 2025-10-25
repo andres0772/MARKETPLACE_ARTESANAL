@@ -1,8 +1,8 @@
 from fastapi import FastAPI, APIRouter
 import os
 
-from .database import get_db #para la sesion de BD
-from .models import Payment, PaymentCreate, PaymentRead  # Modelos personalizados
+from database import get_db  # Para la sesión de BD
+from models import Payment, PaymentCreate, PaymentRead  # Modelos personalizados
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
