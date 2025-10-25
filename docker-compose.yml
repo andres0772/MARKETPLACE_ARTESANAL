@@ -42,32 +42,30 @@ services:
   # --- Plantillas de Microservicios ---
   # TODO: Copiar y modificar "service1" para cada servicio según el tema seleccionado
   
-  # Microservicio de Nombre_del_microservicio
-  service1-service:
-     build: ./services/service1 
-     container_name: service1-service
-     ports:
-       - "8002:8002"
-     environment:
-       - DATABASE_URL=postgresql://user:password@service1-db:5432/service1_db
-     depends_on:
-       - service1-db
+  # Microservicio de pagos
+  pagos-service:
+    build: ./services/pagos 
+    container_name: pagos-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://user:password@pagos-db:5432/pagos_db
+    depends_on:
+      - pagos-db
 
-  # Base de datos para el servicio1
-  service1-db:
+  # Base de datos para el servicio de pagos
+  pagos-db:
      image: postgres:latest
-     container_name: service1-db
+     container_name: pagos-db
      environment:
        - POSTGRES_USER=user
        - POSTGRES_PASSWORD=password
-       - POSTGRES_DB=service1_db
+       - POSTGRES_DB=pagos_db
      ports:
        - "5432:5432"
      volumes:
-       - service1_data:/var/lib/postgresql/data
+       - pagos_data:/var/lib/postgresql
 
 volumes:
   auth_data:
-  service1_data:
-  service2_data:
-  service3_data:
+  pagos_data:
