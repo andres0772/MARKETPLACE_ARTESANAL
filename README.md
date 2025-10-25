@@ -25,8 +25,8 @@ Sigue estos pasos para comenzar tu proyecto:
 2. Clonar el repositorio base:
 
     ```bash
-    git clone https://github.com/USUARIO/nuevo-nombre.git 
-    cd nuevo-nombre
+    git clone https://github.com/andres0772/MARKETPLACE_ARTESANAL.git 
+    cd MARKETPLACE_ARTESANAL
     ```
 
 2. Configuración inicial:
