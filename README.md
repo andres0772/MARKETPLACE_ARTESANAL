@@ -2,7 +2,7 @@
 
 | Código | Nombre | Correo |
 |:---|:---|:---|
-| 542378923 | Fulanito de Tal | fulanito.tal@miuniremington.edu.co |
+| 542378923 | Andres Esteban Vasquez Peña | andres.vasquez.2360@miremington.edu.co |
 | 542378923 | Fulanito de Tal | fulanito.tal@miuniremington.edu.co |
 
 ---
