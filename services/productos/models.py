@@ -1,9 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base
-from datetime import datetime
-
+from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
-from typing import Optional
 
 # Define la base declarativa
 Base = declarative_base()
@@ -11,41 +8,44 @@ Base = declarative_base()
 # TODO: Crea tus modelos de datos aquí.
 # Cada clase de modelo representa una tabla en tu base de datos.
 # Debes renombrar YourModel por el nombre de la Clase según el servicio
-class YourModel(Base):
+class Producto(Base):
     """
     Plantilla de modelo de datos para un recurso.
     Ajusta esta clase según los requisitos de tu tema.
     """
-    __tablename__ = "[nombre_de_tu_tabla]"
+    __tablename__ = "productos"
 
     # Columnas de la tabla
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    price = Column(Float)
+    category = Column(String)
+    image = Column(String)
+    is_active = Column(Boolean, default=True)
+    
 
-    # TODO: Agrega más columnas según sea necesario.
-    # Por ejemplo:
-    # is_active = Column(Boolean, default=True)
-    # foreign_key_id = Column(Integer, ForeignKey("otra_tabla.id"))
 
     def __repr__(self):
-        return f"<YourModel(id={self.id}, name='{self.name}')>"
+        return f"<Producto(id={self.id}, nombre='{self.name}')>"
 
-# TODO: Define los modelos Pydantic para la validación de datos.
-# Estos modelos se usarán en los endpoints de FastAPI para validar la entrada y salida.
 
-class YourModelBase(BaseModel):
+class ProductoCreate(BaseModel):
     name: str
-    description: Optional[str] = None
-    # TODO: Agrega los campos que se necesitan para crear o actualizar un recurso.
+    description: str
+    price: float
+    category: str
+    image: str = None
+    is_active: bool = True
 
-class YourModelCreate(YourModelBase):
-    pass
-
-class YourModelRead(YourModelBase):
+class ProductoResponse(BaseModel):
     id: int
-    created_at: datetime
+    name: str
+    description: str
+    price: float
+    category: str
+    image: str = None
+    is_active: bool = True
     
     class Config:
-        orm_mode = True # Habilita la compatibilidad con ORM
+        from_attributes = True

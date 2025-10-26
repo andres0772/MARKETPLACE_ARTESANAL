@@ -1,7 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter
 import os
 
-from services.pagos.main import DATABASE_URL
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -13,7 +12,6 @@ Base = declarative_base()
 
 app = FastAPI()
 
-# TODO: Crea una instancia del router para organizar los endpoints
 router = APIRouter()
 
 # TODO: Define un endpoint raíz o de salud para verificar que el servicio está funcionando
@@ -40,5 +38,4 @@ def health_check():
 #     return {"message": "[recurso] creado exitosamente."}
 
 
-# TODO: Incluir el router en la aplicación principal
-# app.include_router(router, prefix="/api/v1")
+app.include_router(router, prefix="/api/v1")
