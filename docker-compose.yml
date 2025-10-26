@@ -40,7 +40,6 @@ services:
       - auth_data:/data/db
 
   # --- Plantillas de Microservicios ---
-  # TODO: Copiar y modificar "service1" para cada servicio según el tema seleccionado
   
   # Microservicio de pagos
   pagos-service:
