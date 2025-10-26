@@ -1,14 +1,17 @@
 from fastapi import FastAPI, APIRouter
 import os
 
-from database import get_db  # Para la sesión de BD
-from models import Payment, PaymentCreate, PaymentRead  # Modelos personalizados
+from database import get_db, engine  # Para la sesión de BD y motor
+from models import Payment, PaymentCreate, PaymentRead, Base  # Modelos personalizados y base de SQLAlchemy
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/pagos_db")
 
 app = FastAPI()
+
+# Inicializa la BD y crea tablas al iniciar
+Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
