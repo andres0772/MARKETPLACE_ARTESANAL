@@ -1,12 +1,15 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 import os
 
-# TODO: Importar el módulo de base de datos y los modelos
-# from .database import [tu_motor_de_base_de_datos]
-# from .models import [tus_modelos]
+from services.pagos.main import DATABASE_URL
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-# TODO: Configurar la URL de la base de datos desde las variables de entorno
-# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/productos_db")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 app = FastAPI()
 
