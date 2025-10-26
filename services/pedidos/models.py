@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
@@ -45,6 +46,14 @@ class OrderRead(OrderBase):
     id: int
     created_at: datetime
     is_active: bool
+
+class OrderUpdate(OrderBase):
+    user_id: Optional[int] = None
+    product_id: Optional[int] = None
+    quantity: Optional[int] = None
+    total_amount: Optional[int] = None
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
     
     class Config:
         from_attributes = True
