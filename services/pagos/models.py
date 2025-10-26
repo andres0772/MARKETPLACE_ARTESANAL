@@ -1,16 +1,15 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from typing import Optional
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 
 from pydantic import BaseModel
-from typing import Optional
+
 
 # Define la base declarativa
 Base = declarative_base()
 
-# TODO: Crea tus modelos de datos aquí.
-# Cada clase de modelo representa una tabla en tu base de datos.
-# Debes renombrar YourModel por el nombre de la Clase según el servicio
+
 class Payment(Base):
     """
     Plantilla de modelo de datos para un recurso.
@@ -28,16 +27,12 @@ class Payment(Base):
     payment_method = Column(String)  # Ej. credit_card, paypal
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # TODO: Agrega más columnas según sea necesario.
-    # Por ejemplo:
-    # is_active = Column(Boolean, default=True)
-    # foreign_key_id = Column(Integer, ForeignKey("otra_tabla.id"))
+    #agrego columna adicional de pagos
+    is_active = Column(Boolean, default=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
         return f"<Payment(id={self.id}, amount={self.amount})>"
-
-# TODO: Define los modelos Pydantic para la validación de datos.
-# Estos modelos se usarán en los endpoints de FastAPI para validar la entrada y salida.
 
 class PaymentBase(BaseModel):
     user_id: int
@@ -45,7 +40,8 @@ class PaymentBase(BaseModel):
     amount: int
     currency: str = "COP" 
     payment_method: str
-    # TODO: Agrega los campos que se necesitan para crear o actualizar un recurso.
+    is_active: bool = True
+    updated_at: Optional[datetime] = None
 
 class PaymentCreate(PaymentBase):
     pass
@@ -54,6 +50,7 @@ class PaymentRead(PaymentBase):
     id: int
     status: str
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         orm_mode = True # Habilita la compatibilidad con ORM
