@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
+from typing import Optional
 
 # Define la base declarativa
 Base = declarative_base()
@@ -17,34 +18,34 @@ class Producto(Base):
 
     # Columnas de la tabla
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String)
-    price = Column(Float)
-    category = Column(String)
+    nombre = Column(String, index=True)
+    descripcion = Column(String)
+    precio = Column(Float)
+    categoria = Column(String)
     image = Column(String)
     is_active = Column(Boolean, default=True)
     
 
 
     def __repr__(self):
-        return f"<Producto(id={self.id}, nombre='{self.name}')>"
+        return f"<Producto(id={self.id}, nombre='{self.nombre}')>"
 
 
 class ProductoCreate(BaseModel):
-    name: str
-    description: str
-    price: float
-    category: str
-    image: str = None
+    nombre: str
+    descripcion: str
+    precio: float
+    categoria: str
+    image: Optional[str] = None
     is_active: bool = True
 
 class ProductoResponse(BaseModel):
     id: int
-    name: str
-    description: str
-    price: float
-    category: str
-    image: str = None
+    nombre: str
+    descripcion: str
+    precio: float
+    categoria: str
+    image: Optional[str] = None
     is_active: bool = True
     
     class Config:
