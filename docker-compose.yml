@@ -104,7 +104,39 @@ services:
       timeout: 5s
       retries: 5
 
+  # Microservicio de productos
+  productos-service:
+    build: ./services/productos 
+    container_name: productos-service
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://user:password@productos-db:5432/productos_db
+    depends_on:
+      productos-db:
+        condition: service_healthy
+
+  # Base de datos para el servicio de productos
+  productos-db:
+    image: postgres:latest
+    container_name: productos-db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=productos_db
+      - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
+    ports:
+      - "5433:5432"  # Puerto 5432 para productos (diferente a pagos)
+    volumes:
+      - productos_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d productos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   auth_data:
   pagos_data:
   pedidos_data:
+  productos_data:
