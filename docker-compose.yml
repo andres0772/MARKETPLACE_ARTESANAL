@@ -50,7 +50,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:password@pagos-db:5432/pagos_db
     depends_on:
-      - pagos-db
+      pagos-db:
+        condition: service_healthy
 
   # Base de datos para el servicio de pagos
   pagos-db:
@@ -60,11 +61,50 @@ services:
        - POSTGRES_USER=user
        - POSTGRES_PASSWORD=password
        - POSTGRES_DB=pagos_db
+       - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
      ports:
-       - "5432:5432"
+       - "5434:5432"  # Puerto externo 5434 para evitar conflicto
      volumes:
        - pagos_data:/var/lib/postgresql
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U user -d pagos_db"]
+       interval: 5s
+       timeout: 5s
+       retries: 5
+
+  # Microservicio de pedidos
+  pedidos-service:
+    build: ./services/pedidos 
+    container_name: pedidos-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://user:password@pedidos-db:5432/pedidos_db
+    depends_on:
+      pedidos-db:
+        condition: service_healthy
+
+
+  # Base de datos para el servicio de pedidos
+  pedidos-db:
+    image: postgres:latest
+    container_name: pedidos-db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pedidos_db
+      - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
+    ports:
+      - "5432:5432"  # Puerto 5432 para pedidos (diferente a pagos)
+    volumes:
+      - pedidos_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d pedidos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   auth_data:
   pagos_data:
+  pedidos_data:

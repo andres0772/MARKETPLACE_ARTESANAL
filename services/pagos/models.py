@@ -53,4 +53,4 @@ class PaymentRead(PaymentBase):
     updated_at: Optional[datetime] = None
     
     class Config:
-        orm_mode = True # Habilita la compatibilidad con ORM
+        from_attributes = True # Compatibilidad con Pydantic V2
