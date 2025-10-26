@@ -51,6 +51,15 @@ class PaymentRead(PaymentBase):
     status: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+class PaymentUpdate(PaymentBase):
+    user_id: Optional[int] = None
+    order_id: Optional[int] = None
+    amount: Optional[int] = None
+    currency: Optional[str] = None
+    status: Optional[str] = None
+    payment_method: Optional[str] = None
+    is_active: Optional[bool] = None
     
     class Config:
         from_attributes = True # Compatibilidad con Pydantic V2
