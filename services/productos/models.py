@@ -6,9 +6,7 @@ from typing import Optional
 # Define la base declarativa
 Base = declarative_base()
 
-# TODO: Crea tus modelos de datos aquí.
-# Cada clase de modelo representa una tabla en tu base de datos.
-# Debes renombrar YourModel por el nombre de la Clase según el servicio
+
 class Producto(Base):
     """
     Plantilla de modelo de datos para un recurso.
