@@ -23,7 +23,7 @@ app = FastAPI()
 
 router = APIRouter()
 
-# TODO: Define un endpoint raíz o de salud para verificar que el servicio está funcionando
+
 @app.get("/")
 def read_root():
     return {"message": "Servicio de [nombre_del_servicio] en funcionamiento."}
