@@ -48,7 +48,7 @@ services:
     ports:
       - "8002:8002"
     environment:
-      - DATABASE_URL=postgresql://user:password@pagos-db:5432/pagos_db
+      - DATABASE_URL=postgresql://postgres:postgres@pagos-db:5432/pagos_db
     depends_on:
       pagos-db:
         condition: service_healthy
@@ -58,8 +58,8 @@ services:
      image: postgres:latest
      container_name: pagos-db
      environment:
-       - POSTGRES_USER=user
-       - POSTGRES_PASSWORD=password
+       - POSTGRES_USER=postgres
+       - POSTGRES_PASSWORD=postgres
        - POSTGRES_DB=pagos_db
        - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
      ports:
@@ -67,7 +67,7 @@ services:
      volumes:
        - pagos_data:/var/lib/postgresql
      healthcheck:
-       test: ["CMD-SHELL", "pg_isready -U user -d pagos_db"]
+       test: ["CMD-SHELL", "pg_isready -U postgres -d pagos_db"]
        interval: 5s
        timeout: 5s
        retries: 5
@@ -79,7 +79,7 @@ services:
     ports:
       - "8003:8003"
     environment:
-      - DATABASE_URL=postgresql://user:password@pedidos-db:5432/pedidos_db
+      - DATABASE_URL=postgresql://postgres:postgres@pedidos-db:5432/pedidos_db
     depends_on:
       pedidos-db:
         condition: service_healthy
@@ -90,8 +90,8 @@ services:
     image: postgres:latest
     container_name: pedidos-db
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=pedidos_db
       - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
     ports:
@@ -99,7 +99,7 @@ services:
     volumes:
       - pedidos_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d pedidos_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pedidos_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -111,7 +111,7 @@ services:
     ports:
       - "8004:8004"
     environment:
-      - DATABASE_URL=postgresql://user:password@productos-db:5432/productos_db
+      - DATABASE_URL=postgresql://postgres:postgres@productos-db:5432/productos_db
     depends_on:
       productos-db:
         condition: service_healthy
@@ -121,8 +121,8 @@ services:
     image: postgres:latest
     container_name: productos-db
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=productos_db
       - POSTGRES_HOST_AUTH_METHOD=trust # Para permitir conexiones locales
     ports:
@@ -130,7 +130,7 @@ services:
     volumes:
       - productos_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d productos_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d productos_db"]
       interval: 5s
       timeout: 5s
       retries: 5
