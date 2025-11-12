@@ -1,25 +1,99 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es" data-bs-theme="light">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - Taller de Microservicios</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8">
+  <title>{{ title if title else "Marketplace - UI" }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <!-- Google Fonts: Playfair Display (títulos) y Lato (cuerpo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet">
+  <!-- Fin Google Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+  {% block head %}{% endblock %}
+  <script>
+    // Guardia de Rutas (Route Guard)
+    // Este script se ejecuta antes de cargar el resto de la página para proteger las rutas.
+    (function () {
+      // Se incluye /gateway para proteger el panel de pruebas de la API.
+      const protectedRoutes = ['/productos', '/pedidos', '/pagos', '/gateway'];
+      // Normalizamos el path para que funcione con o sin la barra final (ej. /productos y /productos/)
+      let currentPath = window.location.pathname;
+      if (currentPath.length > 1 && currentPath.endsWith('/')) {
+        currentPath = currentPath.slice(0, -1);
+      }
+      const token = localStorage.getItem('accessToken');
+
+      if (currentPath === '/') return; // La página de inicio es siempre pública.
+
+      // Si la ruta actual está en la lista de rutas protegidas Y no hay token...
+      if (protectedRoutes.includes(currentPath) && !token) {
+        // ...redirigimos al usuario a la página de autenticación.
+        // Le pasamos un mensaje para que sepa por qué fue redirigido.
+        const message = encodeURIComponent("Debes iniciar sesión para acceder a esta página.");
+        window.location.replace(`/auth?message=${message}&type=warning`);
+      }
+    })();
+  </script>
 </head>
+
 <body>
-    <header>
-        <h1>{{ title }}</h1>
-        <nav>
-            <a href="{{ url_for('index') }}">Inicio</a>
-            </nav>
-    </header>
+  <!-- Contenedor para las notificaciones (toasts) -->
+  <div class="toast-container"></div>
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+  <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm" {% if request.path=='/auth' %}style="display: none;"
+    {% endif %}>
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">Marketplace</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="nav" class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="/gateway">Gateway</a></li>
+          <li class="nav-item"><a class="nav-link" href="/productos">Productos</a></li>
+          <li class="nav-item"><a class="nav-link" href="/pedidos">Pedidos</a></li>
+          <li class="nav-item"><a class="nav-link" href="/pagos">Pagos</a></li>
+          <li class="nav-item"><a class="nav-link" href="/auth">Auth</a></li>
+        </ul>
+        <span class="navbar-text small text-secondary">
+          API Gateway: {{ gateway_url if gateway_url else "" }}
+        </span>
+      </div>
+    </div>
+  </nav>
 
-    <footer>
-        <p>&copy; 2025 Proyecto de Seminario</p>
-    </footer>
+  <main class="{% if request.path == '/auth' %}auth-main-container{% endif %}">{% block content %}{% endblock %}</main>
+
+  <footer class="border-top py-3">
+    <div class="container text-center text-secondary small">
+      Hecho con ❤️ con FastAPI + Flask + Docker
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Define la URL pública del API Gateway, inyectada desde Flask.
+    const GATEWAY_URL = "{{ gateway_url }}";
+  </script>
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  <script>
+    // Script para el efecto de la barra de navegación
+    document.addEventListener('DOMContentLoaded', () => {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) {
+        window.addEventListener('scroll', () => {
+          navbar.classList.toggle('scrolled', window.scrollY > 50);
+        });
+      }
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+  {% block body_end %}{% endblock %}
 </body>
+
 </html>

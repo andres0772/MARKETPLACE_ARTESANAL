@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 mb-0">Historial de Pagos</h2>
+  <!-- El botón de agregar pago se elimina, ya que los pagos se inician desde la página de pedidos -->
+</div>
+
+<!-- Modal para Pagar -->
+<div class="modal fade" id="pagoModal" tabindex="-1" aria-labelledby="pagoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-pago">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pagoModalLabel">Procesar Pago</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id">
+          <div class="mb-3">
+            <label class="form-label">Monto del Pedido</label>
+            <input class="form-control" name="monto_pedido" type="text" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Monto a Pagar</label>
+            <input class="form-control" name="monto_pagar" type="number" step="0.01" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Método de Pago</label>
+            <select class="form-select" name="metodo_pago" required>
+              <option value="credit_card" selected>Tarjeta de Crédito</option>
+              <option value="paypal">PayPal</option>
+              <option value="pse">PSE</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Confirmar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Historial de Pagos</span>
+    <button id="btn-refresh" class="btn btn-outline-secondary btn-sm">Actualizar</button>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle table-hover">
+        <thead>
+          <tr>
+            <th>ID Pago</th>
+            <th>ID Pedido</th>
+            <th>ID Usuario</th>
+            <th class="text-end">Monto</th>
+            <th>Estado</th>
+            <th>Método de Pago</th>
+            <th>Fecha de Pago</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pagos"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const pagoModalEl = document.getElementById('pagoModal');
+  const pagoModal = new bootstrap.Modal(pagoModalEl);
+  const pagoForm = document.getElementById('form-pago');
+
+
+  async function fetchPagos() {
+    try {
+      const res = await fetch(`${GATEWAY_URL}/api/v1/pagos/`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || `Error ${res.status}`);
+      }
+      const data = await res.json();
+      const tbody = document.getElementById('tbody-pagos');
+      tbody.innerHTML = '';
+
+      const pagos = Array.isArray(data) ? data : (data.items || []);
+      if (pagos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No hay pagos registrados.</td></tr>`;
+        return;
+      }
+
+      pagos.forEach(p => {
+        const pagoData = JSON.stringify(p).replace(/"/g, '&quot;');
+        let statusClass = 'bg-secondary';
+        if (p.estado === 'completed') statusClass = 'bg-success';
+        if (p.estado === 'failed') statusClass = 'bg-danger';
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr id="pago-row-${p.id}">
+            <td>${p.id ?? ''}</td>
+            <td>${p.id_pedido ?? ''}</td>
+            <td>${p.id_usuario ?? ''}</td>
+            <td class="text-end">${typeof p.monto === 'number' ? formatCurrency(p.monto) : 'N/A'}</td>
+            <td><span class="badge ${statusClass}">${p.estado ?? ''}</span></td>
+            <td>${p.metodo_pago ?? 'N/A'}</td>
+            <td>${p.fecha_pago ? new Date(p.fecha_pago).toLocaleString() : 'Pendiente'}</td>
+            <td class="text-end">
+              ${p.estado === 'pending' ?
+            `<button class="btn btn-sm btn-success" onclick='abrirModalPago(${pagoData})'>Pagar</button>` :
+            `<span class="text-muted">--</span>`
+          }
+            </td>
+          </tr>`);
+      });
+    } catch (error) {
+      showToast(error.message, 'danger');
+    }
+  }
+
+  function abrirModalPago(pago) {
+    pagoForm.id.value = pago.id;
+    pagoForm.monto_pedido.value = formatCurrency(pago.monto);
+    pagoForm.monto_pagar.value = pago.monto; // Sugerir el monto exacto sin formato
+    pagoModal.show();
+  }
+
+  pagoForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const id = fd.get('id');
+    const montoPagar = parseFloat(fd.get('monto_pagar'));
+
+    const payload = {
+      monto: montoPagar,
+      metodo_pago: fd.get('metodo_pago'),
+      estado: "completed" // Se intenta completar
+    };
+
+    try {
+      const res = await fetch(`${GATEWAY_URL}/api/v1/pagos/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        // Si el error es un string (como en algunas excepciones de FastAPI), lo usamos.
+        const detail = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+        throw new Error(`Error al procesar el pago: ${detail}`);
+      }
+
+      showToast('Pago realizado con éxito. El pedido se ha actualizado.', 'success');
+      pagoModal.hide();
+      fetchPagos(); // Recargamos la lista para ver el cambio de estado
+    } catch (error) {
+      showToast(error.message, 'danger');
+    }
+  });
+
+  pagoModalEl.addEventListener('hidden.bs.modal', () => {
+    pagoForm.reset();
+    pagoForm.id.value = '';
+  });
+
+  window.abrirModalPago = abrirModalPago;
+  document.getElementById('btn-refresh').addEventListener('click', fetchPagos);
+  fetchPagos();
+</script>
+{% endblock %}

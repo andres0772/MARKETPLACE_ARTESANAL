@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth_styles.css') }}">
+{% endblock %}
+{% block content %}
+<div class="auth-main-container">
+  <div class="flip-card">
+    <div class="flip-card-inner">
+      <!-- Lado Frontal: Login -->
+      <div class="flip-card-front">
+        <div class="card h-100">
+          <div class="card-header text-center h4">Iniciar Sesión</div>
+          <div class="card-body d-flex flex-column justify-content-center">
+            <form id="form-login" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Email</label>
+                <input class="form-control" name="email" type="email" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Password</label>
+                <input class="form-control" name="password" type="password" required>
+              </div>
+              <div class="col-12 mt-4">
+                <button class="btn btn-primary w-100">Iniciar sesión</button>
+              </div>
+            </form>
+            <div class="text-center mt-3">
+              <a href="#" id="show-register">¿No tienes una cuenta? Regístrate</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Lado Trasero: Registro -->
+      <div class="flip-card-back">
+        <div class="card h-100">
+          <div class="card-header text-center h4">Registro</div>
+          <div class="card-body d-flex flex-column justify-content-center">
+            <form id="form-register" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Email</label>
+                <input class="form-control" name="email" type="email" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Password</label>
+                <input class="form-control" name="password" type="password" required>
+              </div>
+              <div class="col-12 mt-4">
+                <button class="btn btn-success w-100">Registrarse</button>
+              </div>
+            </form>
+            <div class="text-center mt-3">
+              <a href="#" id="show-login">¿Ya tienes una cuenta? Inicia sesión</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  /**
+   * Maneja el envío de formularios de autenticación (registro y login).
+   * @param {Event} event - El evento de envío del formulario.
+   * @param {string} endpoint - La ruta del API a la que se enviará la petición.
+   */
+  async function handleAuthFormSubmit(event, endpoint) {
+    event.preventDefault();
+    const form = event.target;
+
+    // Para el login, usamos form-data con username y password
+    // Para el registro, usamos JSON con email, username y password
+    let requestData;
+    let headers = {};
+
+    if (endpoint === '/login') {
+      // Para login: usar form-data
+      const formData = new FormData();
+      formData.append('username', form.email.value); // El backend espera 'username' pero con el email
+      formData.append('password', form.password.value);
+      requestData = formData;
+      // No establecer Content-Type, el navegador lo hará automáticamente con el boundary
+    } else {
+      // Para registro: usar JSON
+      const email = form.email.value;
+      const username = email.split('@')[0];
+      requestData = {
+        email: email,
+        username: username,
+        password: form.password.value
+      };
+      headers['Content-Type'] = 'application/json';
+      requestData = JSON.stringify(requestData);
+    }
+
+    try {
+      const response = await fetch(`${GATEWAY_URL}/api/v1/auth${endpoint}`, {
+        method: 'POST',
+        headers: headers,
+        body: requestData,
+      });
+
+      // Intentamos parsear la respuesta como JSON
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        // Si el servidor devuelve un error (ej. 400, 401, 500)
+        const errorDetail = responseData.detail || JSON.stringify(responseData);
+        throw new Error(`Error ${response.status}: ${errorDetail}`);
+      }
+
+      // Si es un login exitoso, guardamos el token y redirigimos
+      if (endpoint.includes('login')) {
+        localStorage.setItem('accessToken', responseData.access_token);
+        showToast('Login exitoso. Redirigiendo...', 'success');
+        window.location.href = '/productos'; // Redirigir a la página de productos
+      } else {
+        // Si es un registro exitoso, mostramos el mensaje y limpiamos el formulario
+        showToast('¡Registro exitoso! Ahora puedes iniciar sesión.', 'success');
+        form.reset();
+        // Girar la tarjeta para mostrar el formulario de login
+        document.querySelector('.flip-card').classList.remove('is-flipped');
+      }
+
+    } catch (error) {
+      const errorMessage = `Ha ocurrido un error: ${error.message}`;
+      showToast(errorMessage, 'danger');
+    }
+  }
+
+  document.getElementById('form-register').addEventListener('submit', (e) => handleAuthFormSubmit(e, '/register'));
+  document.getElementById('form-login').addEventListener('submit', (e) => handleAuthFormSubmit(e, '/login'));
+
+  // Mostrar notificación si hay un mensaje en la URL
+  document.addEventListener('DOMContentLoaded', () => {
+    // Ocultar elementos de la UI y el scroll solo en esta página
+    document.body.classList.add('no-scroll');
+    const navbar = document.querySelector('.navbar');
+    const footer = document.querySelector('footer');
+    if (navbar) navbar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+    const messageType = urlParams.get('type') || 'info'; // 'info' por defecto
+
+    if (message) {
+      // El endpoint de auth devuelve "Not authenticated". Lo personalizamos.
+      const displayMessage = message === "Not authenticated"
+        ? "Debes iniciar sesión para acceder a esta página."
+        : message;
+      showToast(displayMessage, messageType);
+    }
+
+    // Lógica para girar la tarjeta
+    const flipCard = document.querySelector('.flip-card');
+    document.getElementById('show-register').addEventListener('click', (e) => {
+      e.preventDefault();
+      flipCard.classList.add('is-flipped');
+    });
+
+    document.getElementById('show-login').addEventListener('click', (e) => {
+      e.preventDefault();
+      flipCard.classList.remove('is-flipped');
+    });
+  });
+</script>
+{% endblock %}

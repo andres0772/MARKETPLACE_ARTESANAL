@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 mb-0">Gestión de Pedidos</h2>
+  <button type="button" class="btn btn-primary" id="btn-open-add-modal">
+    <i class="bi bi-plus-circle me-1"></i> Crear Nuevo Pedido
+  </button>
+</div>
+
+<!-- Modal para Agregar/Editar Pedido -->
+<div class="modal fade" id="pedidoModal" tabindex="-1" aria-labelledby="pedidoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="form-pedido">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pedidoModalLabel">Crear Nuevo Pedido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">ID Usuario</label>
+              <input class="form-control" name="id_usuario" type="number" required>
+            </div>
+            <div class="col-12">
+              <hr>
+              <h6>Ítems del Pedido</h6>
+              <div id="items-container">
+                <!-- Los ítems se añadirán aquí dinámicamente -->
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btn-add-item">
+                <i class="bi bi-plus"></i> Añadir Producto
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" id="btn-submit" class="btn btn-primary">Crear Pedido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que quieres eliminar este pedido? Esta acción no se puede deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="btn-confirm-delete" class="btn btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Listado</span>
+    <button id="btn-refresh" class="btn btn-outline-secondary btn-sm">Actualizar</button>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle table-hover">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>ID Usuario</th>
+            <th class="text-center">Nº de Ítems</th>
+            <th class="text-end">Monto Total</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pedidos"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('form-pedido');
+  const pedidoModalEl = document.getElementById('pedidoModal');
+  const pedidoModal = new bootstrap.Modal(pedidoModalEl);
+  const pedidoModalLabel = document.getElementById('pedidoModalLabel');
+  const itemsContainer = document.getElementById('items-container');
+
+  async function fetchPedidos() {
+    try {
+      const res = await fetch(`${GATEWAY_URL}/api/v1/pedidos/`, { headers: getAuthHeaders() });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || `Error ${res.status}`);
+      }
+      const data = await res.json();
+      const tbody = document.getElementById('tbody-pedidos');
+      tbody.innerHTML = '';
+
+      const pedidos = Array.isArray(data) ? data : (data.items || []);
+      if (pedidos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No hay pedidos disponibles.</td></tr>`;
+        return;
+      }
+
+      pedidos.forEach(p => {
+        const pedidoData = JSON.stringify(p).replace(/"/g, '&quot;');
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr id="pedido-row-${p.id}">
+            <td>${p.id ?? ''}</td>
+            <td>${p.id_usuario ?? ''}</td>
+            <td class="text-center">${p.items?.length ?? 0}</td>
+            <td class="text-end">${typeof p.monto_total === 'number' ? formatCurrency(p.monto_total) : 'N/A'}</td>
+            <td>
+              <span class="badge ${p.estado === 'completed' ? 'bg-success' : (p.estado === 'cancelled' ? 'bg-danger' : 'bg-secondary')}">
+                ${p.estado ?? ''}
+              </span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick='viewPedido(${pedidoData})' title="Ver Detalles">Ver</button>
+              <!-- El botón de pagar se mueve a la página de pagos -->
+              <button class="btn btn-sm btn-outline-danger" onclick="deletePedido('${p.id}')">Eliminar</button>
+            </td>
+          </tr>`);
+      });
+    } catch (error) {
+      showToast(error.message, 'danger');
+    }
+  }
+
+  function viewPedido(pedido) {
+    // Por ahora, 'Ver' simplemente abre el modal de creación.
+    // En una implementación completa, mostraría los detalles del pedido.
+    alert(`Detalles del Pedido #${pedido.id}:\n\n` + // Esta alerta es temporal
+      `Usuario: ${pedido.id_usuario}\n` +
+      `Monto Total: $${pedido.monto_total.toFixed(2)}\n` +
+      `Estado: ${pedido.estado}\n` +
+      `Ítems: ${pedido.items.length}`
+    );
+  }
+
+  function resetForm() {
+    form.reset();
+    itemsContainer.innerHTML = ''; // Limpiar ítems
+    addItemRow(); // Añadir la primera fila
+    pedidoModalLabel.textContent = 'Crear Nuevo Pedido';
+    document.getElementById('btn-submit').textContent = 'Crear Pedido';
+  }
+
+  const deleteConfirmModalEl = document.getElementById('deleteConfirmModal');
+  const deleteConfirmModal = new bootstrap.Modal(deleteConfirmModalEl);
+  const confirmDeleteBtn = document.getElementById('btn-confirm-delete');
+
+  async function deletePedido(id) {
+    confirmDeleteBtn.onclick = async () => {
+      const row = document.getElementById(`pedido-row-${id}`);
+      try {
+        const response = await fetch(`${GATEWAY_URL}/api/v1/pedidos/${id}`, {
+          method: 'DELETE', headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Error al eliminar el pedido');
+        }
+        showToast('Pedido eliminado con éxito.', 'success');
+        if (row) {
+          row.style.transition = 'opacity 0.5s ease';
+          row.style.opacity = '0';
+          setTimeout(() => row.remove(), 500);
+        } else {
+          fetchPedidos();
+        }
+      } catch (error) {
+        showToast(error.message, 'danger');
+      } finally {
+        deleteConfirmModal.hide();
+      }
+    };
+    deleteConfirmModal.show();
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const items = [];
+    const itemRows = itemsContainer.querySelectorAll('.item-row');
+    itemRows.forEach(row => {
+      const id_producto = row.querySelector('input[name="id_producto[]"]').value;
+      const cantidad = row.querySelector('input[name="cantidad[]"]').value;
+      if (id_producto && cantidad) {
+        items.push({
+          id_producto: parseInt(id_producto),
+          cantidad: parseInt(cantidad)
+        });
+      }
+    });
+
+    if (items.length === 0) {
+      showToast('Debe añadir al menos un producto al pedido.', 'warning');
+      return;
+    }
+
+    const payload = {
+      id_usuario: parseInt(fd.get('id_usuario')),
+      items: items
+    };
+
+    try {
+      const res = await fetch(`${GATEWAY_URL}/api/v1/pedidos/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(`Error al crear pedido: ${errorData.detail || res.statusText}`);
+      }
+
+      showToast('Pedido creado con éxito.', 'success');
+
+      pedidoModal.hide();
+      fetchPedidos();
+    } catch (error) {
+      showToast(error.message, 'danger');
+    }
+  });
+
+  function addItemRow() {
+    const itemIndex = itemsContainer.children.length;
+    const itemRow = document.createElement('div');
+    itemRow.className = 'row g-2 mb-2 item-row align-items-end';
+    itemRow.innerHTML = `
+      <div class="col-md-6">
+        <label class="form-label form-label-sm">ID Producto</label>
+        <input class="form-control form-control-sm" name="id_producto[]" type="number" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label form-label-sm">Cantidad</label>
+        <input class="form-control form-control-sm" name="cantidad[]" type="number" value="1" min="1" required>
+      </div>
+      <div class="col-md-2">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">X</button>
+      </div>
+    `;
+    itemsContainer.appendChild(itemRow);
+  }
+
+  document.getElementById('btn-add-item').addEventListener('click', addItemRow);
+
+  pedidoModalEl.addEventListener('hidden.bs.modal', resetForm);
+
+  document.getElementById('btn-open-add-modal').addEventListener('click', () => {
+    pedidoModal.show();
+  });
+
+  window.viewPedido = viewPedido;
+  window.deletePedido = deletePedido;
+  document.getElementById('btn-refresh').addEventListener('click', fetchPedidos);
+  fetchPedidos();
+  // Añadir la primera fila de ítem al cargar la página
+  addItemRow();
+</script>
+{% endblock %}

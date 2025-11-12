@@ -6,7 +6,6 @@ from typing import Optional
 # Define la base declarativa
 Base = declarative_base()
 
-
 class Producto(Base):
     """
     Plantilla de modelo de datos para un recurso.
@@ -36,6 +35,15 @@ class ProductoCreate(BaseModel):
     categoria: str
     image: Optional[str] = None
     is_active: bool = True
+
+class ProductoUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    precio: Optional[float] = None
+    categoria: Optional[str] = None
+    image: Optional[str] = None
+    is_active: Optional[bool] = None
+
 
 class ProductoResponse(BaseModel):
     id: int

@@ -1,19 +1,15 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-# Establece el directorio de trabajo dentro del contenedor.
 WORKDIR /app
-
-# Copia el archivo de dependencias.
-COPY requirements.txt .
-
-# Instala las dependencias.
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el resto de los archivos de la aplicación (código, templates, estáticos).
 COPY . .
 
-# Exponemos el puerto en el que la aplicación Flask se ejecutará.
-EXPOSE 5000
+ENV FLASK_APP=app.py
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=5000
+# Pasada por docker-compose: API_GATEWAY_URL=http://api-gateway:8000
 
-# Flask se ejecutará en todas las interfaces de red (0.0.0.0) en el puerto 5000.
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+EXPOSE 5000
+CMD ["flask", "run"]

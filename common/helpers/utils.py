@@ -1,36 +1,30 @@
 import json
 import requests
+import httpx
+from datetime import datetime
 from typing import Any
 
 # TODO: Define funciones de ayuda que puedan ser útiles en varios microservicios.
-
-def send_request_to_service(url: str, method: str = "GET", data: Any = None):
-    """
-    Envía una petición HTTP a otro microservicio.
-    
-    Args:
-        url (str): La URL completa del endpoint.
-        method (str): El método HTTP (GET, POST, PUT, DELETE).
-        data (Any): Los datos a enviar en el cuerpo de la petición (para POST/PUT).
-    
-    Returns:
-        dict: La respuesta del servicio en formato JSON.
-    
-    Raises:
-        requests.exceptions.RequestException: Si la petición falla.
-    """
-    try:
-        response = requests.request(method, url, json=data)
-        response.raise_for_status()  # Lanza una excepción si la respuesta es un error
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error en la petición: {e}")
-        raise e
 
 
 def format_date(dt_object: datetime):
     """Formatea un objeto datetime a una cadena de texto."""
     return dt_object.strftime("%Y-%m-%d %H:%M:%S")
+
+async def send_async_request(url: str, method: str = "GET", json_data: Any = None):
+    """
+    Envía una petición HTTP asíncrona a otro microservicio usando httpx.
+    """
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.request(method, url, json=json_data, timeout=5.0)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            print(f"Error en la petición asíncrona: {e}")
+            # En un caso real, podrías querer manejar diferentes tipos de errores
+            # o relanzar una excepción personalizada.
+            return None
 
 # TODO: Agrega más funciones de utilidad según sea necesario.
 

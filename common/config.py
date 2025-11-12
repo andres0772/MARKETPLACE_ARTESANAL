@@ -6,23 +6,20 @@ from dotenv import load_dotenv
 # lo que es una buena práctica para entornos de desarrollo y producción.
 load_dotenv()
 
-# TODO: Define una clase para agrupar las configuraciones.
 class Settings:
     """Clase para gestionar las configuraciones de la aplicación."""
     
     # URLs de los servicios
     # La URL del API Gateway se obtiene de las variables de entorno.
     API_GATEWAY_URL: str = os.getenv("API_GATEWAY_URL", "http://localhost:8000")
-    
-    # TODO: Agrega las URLs de los microservicios si son necesarias aquí.
-    # Por ejemplo, para pruebas o scripts de utilidades.
-    # AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8001")
-    # CATALOG_SERVICE_URL: str = os.getenv("CATALOG_SERVICE_URL", "http://catalog-service:8002")
+    AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8001")
+    PRODUCTOS_SERVICE_URL: str = os.getenv("PRODUCTOS_SERVICE_URL", "http://productos-service:8004")
+    PEDIDOS_SERVICE_URL: str = os.getenv("PEDIDOS_SERVICE_URL", "http://pedidos-service:8003")
+    PAGOS_SERVICE_URL: str = os.getenv("PAGOS_SERVICE_URL", "http://pagos-service:8002")
 
-    # TODO: Agrega otras configuraciones globales.
-    # Por ejemplo, una clave secreta para la autenticación o el token JWT.
-    # SECRET_KEY: str = os.getenv("SECRET_KEY", "tu-clave-secreta-muy-segura")
-    # ALGORITHM: str = "HS256"
+    # Configuraciones para la autenticación con JWT.
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "c3a3b7a9f8e1d6c0b5a4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2") # Clave secreta para firmar tokens
+    ALGORITHM: str = "HS256"
 
 # Crea una instancia de la clase de configuración.
 settings = Settings()
