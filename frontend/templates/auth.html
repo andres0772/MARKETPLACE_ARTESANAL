@@ -115,7 +115,7 @@
 
       // Si es un login exitoso, guardamos el token y redirigimos
       if (endpoint.includes('login')) {
-        localStorage.setItem('accessToken', responseData.access_token);
+        sessionStorage.setItem('accessToken', responseData.access_token);
         showToast('Login exitoso. Redirigiendo...', 'success');
         window.location.href = '/productos'; // Redirigir a la página de productos
       } else {

@@ -44,7 +44,7 @@
       if (currentPath.length > 1 && currentPath.endsWith('/')) {
         currentPath = currentPath.slice(0, -1);
       }
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
 
       if (currentPath === '/') return; // La página de inicio es siempre pública.
 
@@ -79,9 +79,15 @@
           <li class="nav-item"><a class="nav-link" href="/pagos">Pagos</a></li>
           <li class="nav-item"><a class="nav-link" href="/auth">Auth</a></li>
         </ul>
-        <span class="navbar-text small text-secondary">
-          API Gateway: {{ gateway_url if gateway_url else "" }}
-        </span>
+        <!-- Contenedor para la información del usuario y el botón de logout -->
+        <div id="user-session-info" style="display: none;">
+          <span id="user-email-display" class="navbar-text small text-secondary me-2">
+            <!-- El email del usuario se insertará aquí -->
+          </span>
+          <button id="btn-logout" class="btn btn-outline-secondary btn-sm">
+            Cerrar Sesión
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -105,12 +111,68 @@
   <script src="{{ url_for('static', filename='js/common.js') }}"></script>
   <script>
     // Script para el efecto de la barra de navegación
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
       const navbar = document.querySelector('.navbar');
       if (navbar) {
         window.addEventListener('scroll', () => {
           navbar.classList.toggle('scrolled', window.scrollY > 50);
         });
+      }
+
+      // --- Lógica de Cierre de Sesión ---
+      const logoutButton = document.getElementById('btn-logout');
+      let inactivityTimer;
+
+      function logout() {
+        // Limpiamos el token y redirigimos
+        sessionStorage.removeItem('accessToken');
+        window.location.href = '/auth';
+      }
+
+      function forceLogout() {
+        // Esta función se usa para el temporizador de inactividad
+        sessionStorage.removeItem('accessToken');
+        showToast('Tu sesión ha expirado por inactividad.', 'info');
+        setTimeout(() => {
+          window.location.href = '/auth';
+        }, 2000); // Espera 2 segundos para que el usuario vea el toast
+      }
+
+      function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        // 15 minutos de inactividad (15 * 60 * 1000 milisegundos)
+        inactivityTimer = setTimeout(forceLogout, 15 * 60 * 1000);
+      }
+
+      // Solo activar la lógica de sesión si el usuario está logueado
+      const token = sessionStorage.getItem('accessToken');
+      if (token) {
+        // Mostrar el contenedor de información del usuario
+        const userSessionInfo = document.getElementById('user-session-info');
+        if (userSessionInfo) userSessionInfo.style.display = 'block';
+
+        // Decodificar el token para obtener el email (subject 'sub')
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const userEmail = payload.sub; // El 'sub' del token JWT suele ser el email/username
+          const userEmailDisplay = document.getElementById('user-email-display');
+          if (userEmailDisplay) userEmailDisplay.textContent = userEmail;
+        } catch (e) {
+          console.error("Error al decodificar el token JWT:", e);
+          document.getElementById('user-email-display').textContent = "Usuario";
+        }
+
+        // Iniciar el temporizador de inactividad
+        resetInactivityTimer();
+
+        // Reiniciar el temporizador con la actividad del usuario
+        window.addEventListener('mousemove', resetInactivityTimer);
+        window.addEventListener('keypress', resetInactivityTimer);
+        window.addEventListener('scroll', resetInactivityTimer);
+        window.addEventListener('click', resetInactivityTimer);
+
+        // Asignar evento al botón de logout
+        if (logoutButton) logoutButton.addEventListener('click', logout);
       }
     });
   </script>

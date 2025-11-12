@@ -62,7 +62,7 @@
 
     // 3. Prepara las opciones para la petición (incluyendo el token si existe)
     const headers = { 'Accept': 'application/json' };
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
